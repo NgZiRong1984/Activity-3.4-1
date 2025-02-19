@@ -61,5 +61,5 @@ jobs:
           docker push $IMAGE_URI:$IMAGE_TAG
 
           # Optionally tag as 'latest'
-          docker tag $IMAGE_URI:$IMAGE_TAG $IMAGE_URI:latest
-          docker push $IMAGE_URI:latest
+          # docker tag $IMAGE_URI:$IMAGE_TAG $IMAGE_URI:latest
+          # docker push $IMAGE_URI:latest
