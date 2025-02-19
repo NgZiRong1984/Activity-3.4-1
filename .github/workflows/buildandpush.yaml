@@ -34,14 +34,19 @@ jobs:
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Extract Repository Name
+      - name: Extract and Convert Repository Name to Lowercase
         run: |
-          REPO_NAME=$(echo "${REPO_NAME}" | cut -d'/' -f2)
+          # Extract only the repo name and convert to lowercase
+          REPO_NAME=$(echo "${REPO_NAME}" | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          echo "Using REPO_NAME: $REPO_NAME"
 
       - name: Build and push Docker image
         run: |
+          # Get AWS Account ID
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+          # Define ECR image URI
           IMAGE_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME
 
           # Build and tag image with commit SHA
