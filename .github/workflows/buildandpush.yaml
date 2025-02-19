@@ -11,7 +11,7 @@ jobs:
 
     env:
       AWS_REGION: ap-southeast-1
-      REPO_NAME: ${{ github.repository }}
+      REPO_NAME: zirong-flask-xray-repo # Explicitly set the repo name
       IMAGE_TAG: ${{ github.sha }}
 
     steps:
@@ -34,27 +34,32 @@ jobs:
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Extract and Convert Repository Name to Lowercase
+      - name: Ensure ECR Repository Exists
         run: |
-          # Extract only the repo name and convert to lowercase
-          REPO_NAME=$(echo "${REPO_NAME}" | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')
-          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
-          echo "Using REPO_NAME: $REPO_NAME"
-
-      - name: Build and push Docker image
-        run: |
-          # Get AWS Account ID
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
-          # Define ECR image URI
+          # Check if repository exists
+          REPO_EXISTS=$(aws ecr describe-repositories --region $AWS_REGION --repository-names $REPO_NAME --query "repositories[0].repositoryName" --output text 2>/dev/null || echo "None")
+
+          if [ "$REPO_EXISTS" = "None" ]; then
+            echo "Repository $REPO_NAME does not exist. Creating..."
+            aws ecr create-repository --repository-name $REPO_NAME --region $AWS_REGION
+            echo "Repository $REPO_NAME created."
+          else
+            echo "Repository $REPO_NAME already exists."
+          fi
+
+      - name: Build and Push Docker Image
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           IMAGE_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME
 
-          # Build and tag image with commit SHA
+          # Build and tag the image with the commit SHA
           docker build -t $IMAGE_URI:$IMAGE_TAG .
 
           # Push image to ECR with the commit SHA tag
           docker push $IMAGE_URI:$IMAGE_TAG
 
-          # Optionally, tag as 'latest' for easy reference
+          # Optionally tag as 'latest'
           docker tag $IMAGE_URI:$IMAGE_TAG $IMAGE_URI:latest
           docker push $IMAGE_URI:latest
