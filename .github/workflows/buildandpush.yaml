@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      AWS_REGION: ap-southeast-1
-      REPO_NAME: zirong-flask-xray-repo # Explicitly set the repo name
+      # AWS_REGION: ap-southeast-1 #add Github Actions Env Var
+      # REPO_NAME: zirong-flask-xray-repo #add Github Actions Env Var
       IMAGE_TAG: ${{ github.sha }}
 
     steps:
